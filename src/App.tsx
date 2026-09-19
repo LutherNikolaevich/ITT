@@ -158,6 +158,13 @@ export default function App() {
     notify('Settings saved')
   }
 
+  const [importCount, setImportCount] = useState(0)
+  const importData = (nextSettings: Settings, nextEntries: TimeEntry[]) => {
+    setSettings(nextSettings)
+    setEntries(nextEntries)
+    setImportCount((count) => count + 1)
+  }
+
   const saveRequirements = (next: Settings) => {
     setSettings(next)
     setSetupOpen(false)
@@ -190,7 +197,16 @@ export default function App() {
               onToggleStatus={toggleStatus}
             />
           )}
-          {view === 'settings' && <SettingsForm settings={settings} onSave={saveSettings} />}
+          {view === 'settings' && (
+            <SettingsForm
+              key={importCount}
+              settings={settings}
+              entries={entries}
+              onSave={saveSettings}
+              onImport={importData}
+              onNotify={notify}
+            />
+          )}
         </main>
       </div>
 

@@ -40,7 +40,7 @@ export function Dashboard({ entries, settings, onSetUp }: DashboardProps) {
           <h3 className="md-empty__title">Set up your OJT requirements</h3>
           <p className="md-empty__body">
             Enter the required hours and your daily schedule to start tracking progress. Your
-            progress, weekly totals, and remaining hours will appear here.
+            progress and weekly totals will appear here.
           </p>
           <Button variant="filled" icon="add" onClick={onSetUp}>
             Add requirements
@@ -51,12 +51,6 @@ export function Dashboard({ entries, settings, onSetUp }: DashboardProps) {
           <div className="md-grid">
             <StatCard label="Total rendered" value={formatHours(total)} icon="schedule" />
             <StatCard label="Required" value={formatHours(required)} icon="flag" />
-            <StatCard
-              label="Remaining"
-              value={formatHours(remaining)}
-              icon="hourglass_top"
-              sub={remaining === 0 ? 'Goal reached!' : undefined}
-            />
             <StatCard label="This week" value={formatHours(week)} icon="today" />
             <StatCard label="This month" value={formatHours(month)} icon="calendar_month" />
             <StatCard label="Excess time" value={formatHours(excess)} icon="trending_up" />
