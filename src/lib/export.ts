@@ -43,16 +43,24 @@ export async function buildZipFile(
   return zipSync(zipped)
 }
 
-export async function exportBackup(settings: Settings, entries: TimeEntry[]): Promise<Uint8Array> {
+export interface ExportResult {
+  bytes: Uint8Array
+  missing: FileMeta[]
+}
+
+export async function exportBackup(settings: Settings, entries: TimeEntry[]): Promise<ExportResult> {
   const data = buildExportData(settings, entries)
   const metas = entries.flatMap((entry) => entry.attachments ?? [])
   const files = await Promise.all(
     metas.map(async (meta) => ({ meta, blob: (await loadFile(meta.id)) ?? null })),
   )
-  return buildZipFile(
-    data,
-    files.filter((f): f is { meta: FileMeta; blob: Blob } => f.blob !== null),
-  )
+  const loaded: { meta: FileMeta; blob: Blob }[] = []
+  const missing: FileMeta[] = []
+  for (const { meta, blob } of files) {
+    if (blob === null) missing.push(meta)
+    else loaded.push({ meta, blob })
+  }
+  return { bytes: await buildZipFile(data, loaded), missing }
 }
 
 export function downloadBlob(bytes: BlobPart, filename: string, type: string): void {

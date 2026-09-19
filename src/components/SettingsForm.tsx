@@ -32,9 +32,13 @@ export function SettingsForm({ settings, entries, onSave, onImport, onNotify }: 
   const handleExport = async () => {
     setExporting(true)
     try {
-      const bytes = await exportBackup(settings, entries)
+      const { bytes, missing } = await exportBackup(settings, entries)
       downloadBlob(bytes, exportFilename(), 'application/zip')
-      onNotify('Data exported')
+      onNotify(
+        missing.length > 0
+          ? `Data exported, but ${missing.length} attachment file${missing.length === 1 ? '' : 's'} couldn't be included`
+          : 'Data exported',
+      )
     } catch {
       onNotify('Export failed')
     } finally {
