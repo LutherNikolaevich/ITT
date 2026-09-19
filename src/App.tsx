@@ -4,6 +4,7 @@ import type { EntryDraft, FileMeta, Settings, TimeEntry, View } from './types'
 import { deleteFiles, saveFile, type StagedFile } from './lib/files'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import { AppBar } from './components/AppBar'
+import { BottomNav } from './components/BottomNav'
 import { Button } from './components/Button'
 import { Dashboard } from './components/Dashboard'
 import { Dialog } from './components/Dialog'
@@ -166,6 +167,7 @@ export default function App() {
   return (
     <div className="md-shell">
       <NavigationRail view={view} onChange={changeView} />
+      <BottomNav view={view} onChange={changeView} />
 
       <div className="md-shell__main">
         <AppBar title={headerTitle(settings.requiredHours, entries)} />

@@ -45,6 +45,20 @@ export function thisWeekMinutes(entries: TimeEntry[], now: Date = new Date()): n
   return minutesInRange(entries, dateKey(start), dateKey(end))
 }
 
+export function excessMinutes(entries: TimeEntry[], dailyHours: number | null): number {
+  if (dailyHours == null || dailyHours <= 0) return 0
+  const expected = dailyHours * 60
+  const byDay = new Map<string, number>()
+  for (const entry of entries) {
+    byDay.set(entry.date, (byDay.get(entry.date) ?? 0) + entryMinutes(entry))
+  }
+  let excess = 0
+  for (const minutes of byDay.values()) {
+    if (minutes > expected) excess += minutes - expected
+  }
+  return excess
+}
+
 export function thisMonthMinutes(entries: TimeEntry[], now: Date = new Date()): number {
   const start = new Date(now.getFullYear(), now.getMonth(), 1)
   const end = new Date(now.getFullYear(), now.getMonth() + 1, 1)

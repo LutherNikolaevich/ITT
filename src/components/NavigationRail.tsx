@@ -14,6 +14,8 @@ const PRIMARY_ITEMS: RailItem[] = [
 
 const SECONDARY_ITEMS: RailItem[] = [{ id: 'settings', icon: 'settings', label: 'Settings' }]
 
+export const NAV_ITEMS: RailItem[] = [...PRIMARY_ITEMS, ...SECONDARY_ITEMS]
+
 interface NavigationRailProps {
   view: View
   onChange: (view: View) => void

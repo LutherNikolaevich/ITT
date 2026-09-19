@@ -55,6 +55,7 @@
   );
 
   --md-comp-top-app-bar-container-height: 64px;
+  --md-comp-bottom-nav-container-height: 80px;
   --md-comp-navigation-rail-container-width: 80px;
   --md-comp-navigation-rail-active-indicator-width: 56px;
   --md-comp-navigation-rail-active-indicator-height: 32px;

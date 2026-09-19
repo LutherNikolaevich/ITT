@@ -9,6 +9,7 @@ import {
   thisWeekMinutes,
   totalRenderedMinutes,
   headerTitle,
+  excessMinutes,
 } from './aggregate'
 
 const entry = (date: string, timeIn: string, timeOut: string, breakMinutes = 0): TimeEntry => ({
@@ -80,6 +81,30 @@ describe('totalRenderedMinutes', () => {
       entry('2026-09-15', '09:00', '12:30'),
     ]
     expect(totalRenderedMinutes(entries)).toBe(420 + 210)
+  })
+})
+
+describe('excessMinutes', () => {
+  it('sums per-day surplus over the daily schedule', () => {
+    const entries = [
+      entry('2026-09-14', '09:00', '18:00', 60), // 8 h vs 8 h/day → 0
+      entry('2026-09-15', '09:00', '18:30', 60), // 8.5 h → 0.5 h excess
+      entry('2026-09-16', '09:00', '12:30'), // 3.5 h → short day, no offset
+    ]
+    expect(excessMinutes(entries, 8)).toBe(30)
+  })
+
+  it('combines multiple entries on the same day before comparing', () => {
+    const entries = [
+      entry('2026-09-14', '09:00', '13:00'),
+      entry('2026-09-14', '14:00', '18:30'),
+    ]
+    expect(excessMinutes(entries, 8)).toBe(30)
+  })
+
+  it('returns 0 without a daily schedule or when no day exceeds it', () => {
+    expect(excessMinutes([entry('2026-09-14', '09:00', '18:00', 60)], null)).toBe(0)
+    expect(excessMinutes([entry('2026-09-14', '09:00', '18:00', 60)], 8)).toBe(0)
   })
 })
 

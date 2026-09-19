@@ -14,6 +14,7 @@ interface TextFieldProps {
   multiline?: boolean
   autoFocus?: boolean
   className?: string
+  lang?: string
 }
 
 export function TextField({
@@ -30,6 +31,7 @@ export function TextField({
   multiline,
   autoFocus,
   className,
+  lang,
 }: TextFieldProps) {
   const id = useId()
   const shared = {
@@ -61,6 +63,7 @@ export function TextField({
           max={max}
           step={step}
           autoFocus={autoFocus}
+          lang={lang}
           {...shared}
         />
       )}

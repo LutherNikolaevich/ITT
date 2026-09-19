@@ -169,6 +169,7 @@ export function EntryForm({ open, editing, entries, settings, onClose, onSave }:
         <TextField
           label="Time in"
           type="time"
+          lang="en-GB"
           value={form.timeIn}
           onChange={(v) => set('timeIn', v)}
           error={errors.timeIn}
@@ -176,6 +177,7 @@ export function EntryForm({ open, editing, entries, settings, onClose, onSave }:
         <TextField
           label="Time out"
           type="time"
+          lang="en-GB"
           value={form.timeOut}
           onChange={(v) => set('timeOut', v)}
           error={errors.timeOut}

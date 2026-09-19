@@ -1,6 +1,6 @@
 import type { Settings, TimeEntry } from '../types'
 import { formatHours } from '../lib/time'
-import { thisMonthMinutes, thisWeekMinutes, totalRenderedMinutes } from '../lib/aggregate'
+import { excessMinutes, thisMonthMinutes, thisWeekMinutes, totalRenderedMinutes } from '../lib/aggregate'
 import { Button } from './Button'
 import { Icon } from './Icon'
 import { ProgressIndicator } from './ProgressIndicator'
@@ -19,6 +19,7 @@ export function Dashboard({ entries, settings, onSetUp }: DashboardProps) {
   const pct = required > 0 ? Math.round((total / required) * 100) : 0
   const week = thisWeekMinutes(entries)
   const month = thisMonthMinutes(entries)
+  const excess = excessMinutes(entries, settings.defaultDailyHours)
 
   return (
     <div className="md-page">
@@ -58,6 +59,7 @@ export function Dashboard({ entries, settings, onSetUp }: DashboardProps) {
             />
             <StatCard label="This week" value={formatHours(week)} icon="today" />
             <StatCard label="This month" value={formatHours(month)} icon="calendar_month" />
+            <StatCard label="Excess time" value={formatHours(excess)} icon="trending_up" />
           </div>
 
           <div className="md-card md-progress-card">
