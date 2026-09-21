@@ -244,6 +244,59 @@
   transition: width var(--md-sys-motion-duration-long) var(--md-sys-motion-easing-emphasized-decelerate);
 }
 
+.md-progress-card__section {
+  margin-top: 20px;
+}
+
+.md-holiday-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 16px 0 0;
+}
+
+.md-holiday-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border: none;
+  border-radius: var(--md-sys-shape-large);
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.md-holiday-row--selected {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.md-holiday-row:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.md-holiday-row__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.md-holiday-row__date {
+  font: var(--md-sys-typescale-title-small);
+  color: inherit;
+}
+
+.md-holiday-row__sub {
+  font: var(--md-sys-typescale-body-small);
+  color: inherit;
+  opacity: 0.75;
+}
+
 .md-progress-card__body {
   margin-top: 12px;
   font: var(--md-sys-typescale-body-medium);

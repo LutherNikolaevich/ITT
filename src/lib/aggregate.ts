@@ -1,4 +1,4 @@
-import type { TimeEntry } from '../types'
+import type { Settings, TimeEntry } from '../types'
 import { formatHours, parseMinutes } from './time'
 
 export function dateKey(d: Date): string {
@@ -17,12 +17,11 @@ export function totalRenderedMinutes(entries: TimeEntry[]): number {
   return entries.reduce((sum, entry) => sum + entryMinutes(entry), 0)
 }
 
-export function headerTitle(requiredHours: number, entries: TimeEntry[]): string {
+export function headerTitle(requiredHours: number, completedMinutes: number): string {
   if (requiredHours <= 0) return 'Set your goal to start tracking'
   const required = requiredHours * 60
-  const total = totalRenderedMinutes(entries)
-  if (total >= required) return 'Goal reached'
-  return `${formatHours(total)} of ${formatHours(required)} logged`
+  if (completedMinutes >= required) return 'Goal reached'
+  return `${formatHours(completedMinutes)} of ${formatHours(required)} logged`
 }
 
 export function startOfWeek(d: Date): Date {
@@ -45,18 +44,64 @@ export function thisWeekMinutes(entries: TimeEntry[], now: Date = new Date()): n
   return minutesInRange(entries, dateKey(start), dateKey(end))
 }
 
-export function excessMinutes(entries: TimeEntry[], dailyHours: number | null): number {
-  if (dailyHours == null || dailyHours <= 0) return 0
-  const expected = dailyHours * 60
+export interface HolidayFill {
+  date: string
+  requiredMinutes: number
+  filledMinutes: number
+}
+
+export interface HolidaySummary {
+  holidays: HolidayFill[]
+  filledCount: number
+  remainingExcessMinutes: number
+  completedMinutes: number
+}
+
+export function holidaySummary(
+  entries: TimeEntry[],
+  settings: Settings,
+  filledDates: string[] = [],
+): HolidaySummary {
+  const dailyRequired =
+    settings.defaultDailyHours != null && settings.defaultDailyHours > 0
+      ? settings.defaultDailyHours * 60
+      : 0
+
   const byDay = new Map<string, number>()
   for (const entry of entries) {
     byDay.set(entry.date, (byDay.get(entry.date) ?? 0) + entryMinutes(entry))
   }
-  let excess = 0
-  for (const minutes of byDay.values()) {
-    if (minutes > expected) excess += minutes - expected
+
+  let bank = 0
+  let regular = 0
+  if (dailyRequired <= 0) {
+    regular = totalRenderedMinutes(entries)
+  } else {
+    for (const minutes of byDay.values()) {
+      regular += Math.min(minutes, dailyRequired)
+      bank += Math.max(0, minutes - dailyRequired)
+    }
   }
-  return excess
+
+  const selected = new Set(filledDates)
+  const unworked = settings.holidays.filter((date) => !byDay.has(date)).sort()
+  const holidays: HolidayFill[] = []
+  let credit = 0
+  let filledCount = 0
+  for (const date of unworked) {
+    const used = selected.has(date) ? Math.min(bank, dailyRequired) : 0
+    bank -= used
+    credit += used
+    if (dailyRequired > 0 && used >= dailyRequired) filledCount += 1
+    holidays.push({ date, requiredMinutes: dailyRequired, filledMinutes: used })
+  }
+
+  return {
+    holidays,
+    filledCount,
+    remainingExcessMinutes: bank,
+    completedMinutes: regular + credit,
+  }
 }
 
 export function thisMonthMinutes(entries: TimeEntry[], now: Date = new Date()): number {

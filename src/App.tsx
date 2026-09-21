@@ -10,7 +10,7 @@ import { Dashboard } from './components/Dashboard'
 import { Dialog } from './components/Dialog'
 import { EntryForm } from './components/EntryForm'
 import { Icon } from './components/Icon'
-import { headerTitle } from './lib/aggregate'
+import { headerTitle, holidaySummary } from './lib/aggregate'
 import { NavigationRail } from './components/NavigationRail'
 import { SettingsForm } from './components/SettingsForm'
 import { SetupDialog } from './components/SetupDialog'
@@ -32,6 +32,7 @@ export default function App() {
   const settings: Settings = { ...DEFAULT_SETTINGS, ...storedSettings, holidays: storedSettings.holidays ?? [] }
   const setSettings = setStoredSettings
   const [entries, setEntries] = useLocalStorage<TimeEntry[]>('ojt-entries', [])
+  const [filledHolidays, setFilledHolidays] = useLocalStorage<string[]>('ojt-filled-holidays', [])
   const [view, setView] = useState<View>('dashboard')
   const [entryOpen, setEntryOpen] = useState(false)
   const [setupOpen, setSetupOpen] = useState(false)
@@ -177,13 +178,24 @@ export default function App() {
       <BottomNav view={view} onChange={changeView} />
 
       <div className="md-shell__main">
-        <AppBar title={headerTitle(settings.requiredHours, entries)} />
+        <AppBar
+          title={headerTitle(
+            settings.requiredHours,
+            holidaySummary(entries, settings, filledHolidays).completedMinutes,
+          )}
+        />
 
         <main className="md-content">
           {view === 'dashboard' && (
             <Dashboard
               entries={entries}
               settings={settings}
+              filledHolidays={filledHolidays}
+              onToggleHolidayFill={(date) =>
+                setFilledHolidays((prev) =>
+                  prev.includes(date) ? prev.filter((d) => d !== date) : [...prev, date],
+                )
+              }
               onSetUp={() => setSetupOpen(true)}
             />
           )}
