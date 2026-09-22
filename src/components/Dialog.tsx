@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from 'react'
-import { Icon } from './Icon'
+import { IconButton } from './IconButton'
 
 interface DialogProps {
   open: boolean
@@ -34,15 +34,7 @@ export function Dialog({ open, title, onClose, children, actions, wide, classNam
       >
         <div className="md-dialog__header">
           <h2 className="md-dialog__title">{title}</h2>
-          <button
-            type="button"
-            className="md-icon-btn"
-            aria-label="Close"
-            title="Close"
-            onClick={onClose}
-          >
-            <Icon name="close" />
-          </button>
+          <IconButton icon="close" label="Close" onClick={onClose} />
         </div>
         <div className="md-dialog__body">{children}</div>
         {actions && <div className="md-dialog__actions">{actions}</div>}

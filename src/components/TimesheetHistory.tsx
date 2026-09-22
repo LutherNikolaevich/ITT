@@ -5,6 +5,7 @@ import { formatHours } from '../lib/time'
 import { Button } from './Button'
 import { Chip } from './Chip'
 import { Icon } from './Icon'
+import { IconButton } from './IconButton'
 import { AttachmentViewer } from './AttachmentViewer'
 import { SegmentedButton } from './SegmentedButton'
 
@@ -16,7 +17,6 @@ interface TimesheetHistoryProps {
   onSetUp: () => void
   onEdit: (id: string) => void
   onDelete: (id: string) => void
-  onToggleStatus: (id: string) => void
 }
 
 function formatDate(date: string): string {
@@ -35,7 +35,6 @@ export function TimesheetHistory({
   onSetUp,
   onEdit,
   onDelete,
-  onToggleStatus,
 }: TimesheetHistoryProps) {
   const [filter, setFilter] = useState<HistoryFilter>('all')
   const [viewerId, setViewerId] = useState<string | null>(null)
@@ -65,7 +64,7 @@ export function TimesheetHistory({
     <div className="md-page">
       <div className="md-page__header">
         <h2 className="md-headline">Your entries</h2>
-        <span className="md-page__sub">Review, edit, or submit your logged hours</span>
+        <span className="md-page__sub">Review or edit your logged hours</span>
       </div>
 
       <div className="md-history-toolbar">
@@ -120,16 +119,6 @@ export function TimesheetHistory({
                 <div className="md-entry__main">
                   <div className="md-entry__line">
                     <span className="md-entry__date">{formatDate(entry.date)}</span>
-                    <Chip
-                      onClick={() => onToggleStatus(entry.id)}
-                      selected={entry.status === 'submitted'}
-                      icon={entry.status === 'submitted' ? 'check' : undefined}
-                      title={
-                        entry.status === 'draft' ? 'Mark as submitted' : 'Mark as draft'
-                      }
-                    >
-                      {entry.status === 'draft' ? 'Draft' : 'Submitted'}
-                    </Chip>
                     {attachmentCount > 0 && (
                       <Chip
                         icon="attach_file"
@@ -155,24 +144,8 @@ export function TimesheetHistory({
                 <div className="md-entry__side">
                   <span className="md-entry__total">{formatHours(entryMinutes(entry))}</span>
                   <div className="md-entry__actions">
-                    <button
-                      type="button"
-                      className="md-icon-btn"
-                      aria-label="Edit entry"
-                      title="Edit entry"
-                      onClick={() => onEdit(entry.id)}
-                    >
-                      <Icon name="edit" />
-                    </button>
-                    <button
-                      type="button"
-                      className="md-icon-btn"
-                      aria-label="Delete entry"
-                      title="Delete entry"
-                      onClick={() => onDelete(entry.id)}
-                    >
-                      <Icon name="delete" />
-                    </button>
+                    <IconButton icon="edit" label="Edit entry" onClick={() => onEdit(entry.id)} />
+                    <IconButton icon="delete" label="Delete entry" onClick={() => onDelete(entry.id)} />
                   </div>
                 </div>
               </li>

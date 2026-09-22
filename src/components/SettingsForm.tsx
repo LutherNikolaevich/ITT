@@ -12,10 +12,11 @@ interface SettingsFormProps {
   entries: TimeEntry[]
   onSave: (settings: Settings) => void
   onImport: (settings: Settings, entries: TimeEntry[]) => void
+  onReset: () => void
   onNotify: (message: string) => void
 }
 
-export function SettingsForm({ settings, entries, onSave, onImport, onNotify }: SettingsFormProps) {
+export function SettingsForm({ settings, entries, onSave, onImport, onReset, onNotify }: SettingsFormProps) {
   const [form, setForm] = useState<RequirementsDraft>({
     requiredHours: settings.requiredHours > 0 ? String(settings.requiredHours) : '',
     startDate: settings.startDate,
@@ -27,6 +28,7 @@ export function SettingsForm({ settings, entries, onSave, onImport, onNotify }: 
   const [exporting, setExporting] = useState(false)
   const [importing, setImporting] = useState(false)
   const [pendingImport, setPendingImport] = useState<ReturnType<typeof parseBackup> | null>(null)
+  const [confirmReset, setConfirmReset] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleExport = async () => {
@@ -130,7 +132,7 @@ export function SettingsForm({ settings, entries, onSave, onImport, onNotify }: 
           >
             Import data
           </Button>
-          <Button variant="outlined" icon="download" disabled={exporting} onClick={handleExport}>
+          <Button variant="tonal" icon="download" disabled={exporting} onClick={handleExport}>
             Export data
           </Button>
         </div>
@@ -146,6 +148,51 @@ export function SettingsForm({ settings, entries, onSave, onImport, onNotify }: 
         />
       </section>
 
+      <section className="md-card md-settings-form">
+        <div>
+          <h3 className="md-section-title">Danger zone</h3>
+          <span className="md-page__sub">Erase all entries, settings, and attachments</span>
+        </div>
+        <div className="md-settings-actions">
+          <Button
+            variant="outlined"
+            className="md-btn--error"
+            icon="delete_forever"
+            onClick={() => setConfirmReset(true)}
+          >
+            Erase all data
+          </Button>
+        </div>
+      </section>
+
+      <Dialog
+        open={confirmReset}
+        title="Erase all data?"
+        onClose={() => setConfirmReset(false)}
+        actions={
+          <>
+            <Button variant="text" onClick={() => setConfirmReset(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="text"
+              className="md-btn--error"
+              onClick={() => {
+                setConfirmReset(false)
+                onReset()
+              }}
+            >
+              Erase
+            </Button>
+          </>
+        }
+      >
+        <p className="md-dialog__text">
+          All entries, settings, and attachments will be permanently removed. This cannot be
+          undone.
+        </p>
+      </Dialog>
+
       <Dialog
         open={pendingImport !== null}
         title="Import backup?"
@@ -155,7 +202,7 @@ export function SettingsForm({ settings, entries, onSave, onImport, onNotify }: 
             <Button variant="text" onClick={() => setPendingImport(null)}>
               Cancel
             </Button>
-            <Button disabled={importing} onClick={() => void confirmImport()}>
+            <Button icon="check" disabled={importing} onClick={() => void confirmImport()}>
               Import
             </Button>
           </>

@@ -13,7 +13,6 @@ const entryWith = (metas: FileMeta[]): TimeEntry => ({
   breakMinutes: 60,
   task: 'Training',
   notes: '',
-  status: 'draft',
   attachments: metas,
 })
 

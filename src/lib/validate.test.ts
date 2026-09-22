@@ -21,7 +21,6 @@ const entry = (id: string, date: string, timeIn: string, timeOut: string): TimeE
   breakMinutes: 0,
   task: '',
   notes: '',
-  status: 'draft',
 })
 
 describe('validateEntry', () => {

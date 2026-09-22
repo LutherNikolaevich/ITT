@@ -1,5 +1,3 @@
-export type EntryStatus = 'draft' | 'submitted'
-
 export type View = 'dashboard' | 'timesheet' | 'settings'
 
 export interface Settings {
@@ -24,7 +22,6 @@ export interface TimeEntry {
   breakMinutes: number
   task: string
   notes: string
-  status: EntryStatus
   attachments?: FileMeta[]
 }
 

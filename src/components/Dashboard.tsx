@@ -1,7 +1,9 @@
 import type { Settings, TimeEntry } from '../types'
 import { formatHours } from '../lib/time'
 import { holidaySummary, thisMonthMinutes, thisWeekMinutes } from '../lib/aggregate'
+import { contributionsCalendar } from '../lib/contributions'
 import { Button } from './Button'
+import { ContributionsCalendar } from './ContributionsCalendar'
 import { Icon } from './Icon'
 import { ProgressIndicator } from './ProgressIndicator'
 import { StatCard } from './StatCard'
@@ -39,6 +41,11 @@ export function Dashboard({
   const holidayRequired = summary.holidays.reduce((sum, h) => sum + h.requiredMinutes, 0)
   const holidayFilled = summary.holidays.reduce((sum, h) => sum + h.filledMinutes, 0)
   const holidayPct = holidayRequired > 0 ? Math.round((holidayFilled / holidayRequired) * 100) : 0
+  const calendarWeeks = contributionsCalendar(entries, (settings.defaultDailyHours ?? 0) * 60)
+  const calendarTotal = calendarWeeks.reduce(
+    (sum, week) => sum + week.days.reduce((total, day) => total + (day?.minutes ?? 0), 0),
+    0,
+  )
 
   return (
     <div className="md-page">
@@ -134,6 +141,8 @@ export function Dashboard({
               </div>
             )}
           </div>
+
+          <ContributionsCalendar weeks={calendarWeeks} totalMinutes={calendarTotal} />
         </>
       )}
     </div>

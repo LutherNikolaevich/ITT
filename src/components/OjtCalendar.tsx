@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { dateKey } from '../lib/aggregate'
-import { Icon } from './Icon'
+import { IconButton } from './IconButton'
 
 interface OjtCalendarProps {
   startDate: string
@@ -55,25 +55,11 @@ export function OjtCalendar({ startDate, excluded, onChange }: OjtCalendarProps)
   return (
     <div className="md-cal">
       <div className="md-cal__header">
-        <button
-          type="button"
-          className="md-cal__nav"
-          aria-label="Previous month"
-          onClick={() => shift(-1)}
-        >
-          <Icon name="chevron_left" />
-        </button>
+        <IconButton icon="chevron_left" label="Previous month" onClick={() => shift(-1)} />
         <span className="md-cal__title" aria-live="polite">
           {monthLabel(view.year, view.month)}
         </span>
-        <button
-          type="button"
-          className="md-cal__nav"
-          aria-label="Next month"
-          onClick={() => shift(1)}
-        >
-          <Icon name="chevron_right" />
-        </button>
+        <IconButton icon="chevron_right" label="Next month" onClick={() => shift(1)} />
       </div>
       <div className="md-cal__grid" role="grid" aria-label="Holidays">
         {DOW.map((d) => (

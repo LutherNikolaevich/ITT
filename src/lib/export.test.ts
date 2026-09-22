@@ -18,7 +18,6 @@ const entry: TimeEntry = {
   breakMinutes: 60,
   task: 'Training',
   notes: '',
-  status: 'draft',
   attachments: [{ id: 'a1', name: 'photo.png', type: 'image/png', size: 3 }],
 }
 

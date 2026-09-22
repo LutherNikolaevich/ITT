@@ -85,3 +85,7 @@ export async function deleteFile(id: string): Promise<void> {
 export async function deleteFiles(ids: string[]): Promise<void> {
   await Promise.all(ids.map((id) => deleteFile(id).catch(() => undefined)))
 }
+
+export async function clearAllFiles(): Promise<void> {
+  await withStore('readwrite', (store) => store.clear() as IDBRequest<undefined>)
+}

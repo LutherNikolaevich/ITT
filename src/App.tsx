@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { flushSync } from 'react-dom'
 import type { EntryDraft, FileMeta, Settings, TimeEntry, View } from './types'
-import { deleteFiles, saveFile, type StagedFile } from './lib/files'
+import { clearAllFiles, deleteFiles, saveFile, type StagedFile } from './lib/files'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import { AppBar } from './components/AppBar'
 import { BottomNav } from './components/BottomNav'
@@ -127,7 +127,6 @@ export default function App() {
         breakMinutes,
         task: draft.task.trim(),
         notes: draft.notes.trim(),
-        status: 'draft',
         attachments,
       }
       setEntries((list) => [...list, entry])
@@ -144,16 +143,6 @@ export default function App() {
     notify('Entry deleted')
   }
 
-  const toggleStatus = (id: string) => {
-    setEntries((list) =>
-      list.map((entry) =>
-        entry.id === id
-          ? { ...entry, status: entry.status === 'draft' ? 'submitted' : 'draft' }
-          : entry,
-      ),
-    )
-  }
-
   const saveSettings = (next: Settings) => {
     setSettings(next)
     notify('Settings saved')
@@ -164,6 +153,19 @@ export default function App() {
     setSettings(nextSettings)
     setEntries(nextEntries)
     setImportCount((count) => count + 1)
+  }
+
+  const resetAll = async () => {
+    try {
+      await clearAllFiles()
+    } catch {
+      // Blobs may be orphaned, but app data is still reset below
+    }
+    setSettings(DEFAULT_SETTINGS)
+    setEntries([])
+    setFilledHolidays([])
+    setImportCount((count) => count + 1)
+    notify('All data erased')
   }
 
   const saveRequirements = (next: Settings) => {
@@ -206,7 +208,6 @@ export default function App() {
               onSetUp={() => setSetupOpen(true)}
               onEdit={openEdit}
               onDelete={setDeleteId}
-              onToggleStatus={toggleStatus}
             />
           )}
           {view === 'settings' && (
@@ -216,6 +217,7 @@ export default function App() {
               entries={entries}
               onSave={saveSettings}
               onImport={importData}
+              onReset={() => void resetAll()}
               onNotify={notify}
             />
           )}

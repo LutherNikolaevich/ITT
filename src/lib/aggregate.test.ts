@@ -20,7 +20,6 @@ const entry = (date: string, timeIn: string, timeOut: string, breakMinutes = 0):
   breakMinutes,
   task: '',
   notes: '',
-  status: 'draft',
 })
 
 const settings = (overrides: Partial<Settings> = {}): Settings => ({

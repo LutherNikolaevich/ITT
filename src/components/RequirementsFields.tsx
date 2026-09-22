@@ -57,7 +57,7 @@ export function RequirementsFields({ form, set, errors }: RequirementsFieldsProp
               onChange={(dates) => set('holidays', dates)}
             />
             {!errors.holidays && (
-              <Button variant="text" icon="calendar_month" onClick={() => setShowCalendar(false)}>
+              <Button variant="tonal" icon="calendar_month" onClick={() => setShowCalendar(false)}>
                 Hide calendar
               </Button>
             )}

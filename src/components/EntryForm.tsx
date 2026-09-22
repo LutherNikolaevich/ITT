@@ -7,6 +7,7 @@ import { dateKey } from '../lib/aggregate'
 import { Button } from './Button'
 import { Dialog } from './Dialog'
 import { Icon } from './Icon'
+import { IconButton } from './IconButton'
 import { TextField } from './TextField'
 
 const TIME_RE = /^\d{2}:\d{2}$/
@@ -233,15 +234,11 @@ export function EntryForm({ open, editing, entries, settings, onClose, onSave }:
                   {meta.name}
                 </span>
                 <span className="md-attach__size">{formatBytes(meta.size)}</span>
-                <button
-                  type="button"
-                  className="md-icon-btn"
-                  aria-label={`Remove ${meta.name}`}
-                  title="Remove"
+                <IconButton
+                  icon="close"
+                  label={`Remove ${meta.name}`}
                   onClick={() => setExisting((list) => list.filter((m) => m.id !== meta.id))}
-                >
-                  <Icon name="close" />
-                </button>
+                />
               </li>
             ))}
             {staged.map(({ meta, file }) => (
@@ -251,15 +248,11 @@ export function EntryForm({ open, editing, entries, settings, onClose, onSave }:
                   {meta.name}
                 </span>
                 <span className="md-attach__size">{formatBytes(meta.size)}</span>
-                <button
-                  type="button"
-                  className="md-icon-btn"
-                  aria-label={`Remove ${meta.name}`}
-                  title="Remove"
+                <IconButton
+                  icon="close"
+                  label={`Remove ${meta.name}`}
                   onClick={() => setStaged((list) => list.filter((s) => s.meta.id !== meta.id))}
-                >
-                  <Icon name="close" />
-                </button>
+                />
               </li>
             ))}
           </ul>
