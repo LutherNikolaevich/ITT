@@ -1,2 +1,0 @@
-# ITT
-Internship Time Tracker
