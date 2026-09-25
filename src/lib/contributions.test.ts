@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { TimeEntry } from '../types'
-import { contributionsCalendar } from './contributions'
+import { contributionsCalendar, streakStats } from './contributions'
 
 const entry = (date: string, timeIn: string, timeOut: string, breakMinutes = 0): TimeEntry => ({
   id: `${date}-${timeIn}`,
@@ -42,7 +42,14 @@ describe('contributionsCalendar', () => {
     const weeks = contributionsCalendar(entries, 480, new Date(2026, 8, 16))
     const day = weeks.flatMap((week) => week.days).find((day) => day?.date === '2026-09-15')
     expect(day?.minutes).toBe(480)
+    expect(day?.entries).toBe(2)
     expect(day?.level).toBe(4)
+  })
+
+  it('counts zero entries on days without logs', () => {
+    const weeks = contributionsCalendar([], 480, new Date(2026, 8, 16))
+    const day = weeks.flatMap((week) => week.days).find((day) => day?.date === '2026-09-15')
+    expect(day?.entries).toBe(0)
   })
 
   it('maps minutes to levels against the daily target', () => {
@@ -85,5 +92,49 @@ describe('contributionsCalendar', () => {
       .filter((day) => day !== null)
       .map((day) => day.level)
     expect(new Set(levels)).toEqual(new Set([0]))
+  })
+
+  it('computes current, longest streaks and active days', () => {
+    const entries = [
+      entry('2026-09-14', '09:00', '10:00'),
+      entry('2026-09-15', '09:00', '10:00'),
+      entry('2026-09-16', '09:00', '10:00'),
+      entry('2026-09-11', '09:00', '12:00'),
+      entry('2026-09-10', '09:00', '12:00'),
+    ]
+    const weeks = contributionsCalendar(entries, 480, new Date(2026, 8, 16))
+    expect(streakStats(weeks)).toEqual({ current: 3, longest: 3, activeDays: 5 })
+  })
+
+  it('keeps the current streak alive when today is not logged yet', () => {
+    const entries = [
+      entry('2026-09-14', '09:00', '10:00'),
+      entry('2026-09-15', '09:00', '10:00'),
+    ]
+    const weeks = contributionsCalendar(entries, 480, new Date(2026, 8, 16))
+    expect(streakStats(weeks).current).toBe(2)
+  })
+
+  it('breaks the streak once the previous day is also empty', () => {
+    const entries = [entry('2026-09-13', '09:00', '10:00')]
+    const weeks = contributionsCalendar(entries, 480, new Date(2026, 8, 16))
+    expect(streakStats(weeks).current).toBe(0)
+  })
+
+  it('finds the longest streak even when the current one is shorter', () => {
+    const entries = [
+      entry('2025-10-06', '09:00', '10:00'),
+      entry('2025-10-07', '09:00', '10:00'),
+      entry('2025-10-08', '09:00', '10:00'),
+      entry('2025-10-09', '09:00', '10:00'),
+      entry('2026-09-16', '09:00', '10:00'),
+    ]
+    const weeks = contributionsCalendar(entries, 480, new Date(2026, 8, 16))
+    expect(streakStats(weeks)).toEqual({ current: 1, longest: 4, activeDays: 5 })
+  })
+
+  it('returns zeros for an empty calendar', () => {
+    const weeks = contributionsCalendar([], 480, new Date(2026, 8, 16))
+    expect(streakStats(weeks)).toEqual({ current: 0, longest: 0, activeDays: 0 })
   })
 })

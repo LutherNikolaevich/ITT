@@ -1,4 +1,7 @@
-import type { CalendarWeek } from '../lib/contributions'
+import { useState } from 'react'
+import type { CalendarDay, CalendarWeek } from '../lib/contributions'
+import { streakStats } from '../lib/contributions'
+import { dateKey } from '../lib/aggregate'
 import { formatHours } from '../lib/time'
 
 interface ContributionsCalendarProps {
@@ -12,6 +15,14 @@ const STEP = CELL + GAP
 
 function formatDay(date: string): string {
   return new Date(`${date}T00:00:00`).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+function formatDayLong(date: string): string {
+  return new Date(`${date}T00:00:00`).toLocaleDateString(undefined, {
+    weekday: 'short',
     month: 'short',
     day: 'numeric',
   })
@@ -37,11 +48,38 @@ function monthLabels(weeks: CalendarWeek[]): MonthLabel[] {
   return labels
 }
 
+function detailFor(day: CalendarDay): string {
+  if (day.minutes <= 0) return `${formatDayLong(day.date)} · no hours logged`
+  const entries = day.entries === 1 ? '1 entry' : `${day.entries} entries`
+  return `${formatDayLong(day.date)} · ${formatHours(day.minutes)} · ${entries}`
+}
+
 export function ContributionsCalendar({ weeks, totalMinutes }: ContributionsCalendarProps) {
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const today = dateKey(new Date())
+  const stats = streakStats(weeks)
+  const selected = weeks
+    .flatMap((week) => week.days)
+    .find((day) => day?.date === selectedDate)
+
   return (
     <div className="md-card md-contrib">
-      <div className="md-contrib__grid" aria-hidden="true">
-        <div className="md-contrib__weekdays">
+      <div className="md-contrib__stats">
+        <span className="md-contrib__stat">
+          <span className="md-contrib__stat-value">{stats.current}</span>
+          <span className="md-contrib__stat-label">current streak</span>
+        </span>
+        <span className="md-contrib__stat">
+          <span className="md-contrib__stat-value">{stats.longest}</span>
+          <span className="md-contrib__stat-label">longest streak</span>
+        </span>
+        <span className="md-contrib__stat">
+          <span className="md-contrib__stat-value">{stats.activeDays}</span>
+          <span className="md-contrib__stat-label">active days</span>
+        </span>
+      </div>
+      <div className="md-contrib__grid">
+        <div className="md-contrib__weekdays" aria-hidden="true">
           <span />
           <span>Mon</span>
           <span />
@@ -61,15 +99,27 @@ export function ContributionsCalendar({ weeks, totalMinutes }: ContributionsCale
           <div className="md-contrib__days">
             {weeks.flatMap((week, weekIndex) =>
               week.days.map((day, dayIndex) => {
-                const key = day?.date ?? `${weekIndex}-${dayIndex}`
-                const title = day
-                  ? `${formatHours(day.minutes)} · ${formatDay(day.date)}`
-                  : undefined
+                if (!day) {
+                  const voidKey = `void-${weekIndex}-${dayIndex}`
+                  return <span key={voidKey} className="md-contrib__day md-contrib__day--void" />
+                }
+                const classes = [
+                  'md-contrib__day',
+                  `md-contrib__day--${day.level}`,
+                  day.date === today && 'md-contrib__day--today',
+                  day.date === selectedDate && 'md-contrib__day--selected',
+                ]
+                  .filter(Boolean)
+                  .join(' ')
                 return (
-                  <span
-                    key={key}
-                    title={title}
-                    className={`md-contrib__day${day ? ` md-contrib__day--${day.level}` : ''}`}
+                  <button
+                    key={day.date}
+                    type="button"
+                    title={`${formatHours(day.minutes)} · ${formatDay(day.date)}`}
+                    aria-label={`${formatDay(day.date)}: ${formatHours(day.minutes)}`}
+                    aria-pressed={day.date === selectedDate}
+                    className={classes}
+                    onClick={() => setSelectedDate(day.date === selectedDate ? null : day.date)}
                   />
                 )
               }),
@@ -77,6 +127,9 @@ export function ContributionsCalendar({ weeks, totalMinutes }: ContributionsCale
           </div>
         </div>
       </div>
+      <p className="md-contrib__detail" aria-live="polite">
+        {selected ? detailFor(selected) : 'Tap a day for details'}
+      </p>
       <div className="md-contrib__footer">
         <span className="md-contrib__summary">
           {formatHours(totalMinutes)} logged in the last 12 months
