@@ -5,7 +5,7 @@ import { loadFile } from './files'
 const APP_ID = 'ojt-hours-tracker'
 const EXPORT_VERSION = 1
 
-export interface ExportData {
+interface ExportData {
   app: string
   version: number
   exportedAt: string
@@ -43,7 +43,7 @@ export async function buildZipFile(
   return zipSync(zipped)
 }
 
-export interface ExportResult {
+interface ExportResult {
   bytes: Uint8Array
   missing: FileMeta[]
 }
@@ -81,7 +81,7 @@ export function validateExportData(json: unknown): ExportData | null {
   return data as unknown as ExportData
 }
 
-export interface ParsedBackup {
+interface ParsedBackup {
   data: ExportData
   files: { meta: FileMeta; bytes: Uint8Array }[]
 }

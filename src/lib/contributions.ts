@@ -1,21 +1,16 @@
 import type { TimeEntry } from '../types'
-import { dateKey, entryMinutes, startOfWeek } from './aggregate'
+import { dateKey, entryMinutes, startOfWeek, type DayFill } from './aggregate'
 
 export interface CalendarDay {
   date: string
   minutes: number
   entries: number
+  filled: number
   level: 0 | 1 | 2 | 3 | 4
 }
 
 export interface CalendarWeek {
   days: Array<CalendarDay | null>
-}
-
-export interface StreakStats {
-  current: number
-  longest: number
-  activeDays: number
 }
 
 function levelFor(minutes: number, required: number): CalendarDay['level'] {
@@ -30,6 +25,8 @@ function levelFor(minutes: number, required: number): CalendarDay['level'] {
 export function contributionsCalendar(
   entries: TimeEntry[],
   dailyRequiredMinutes: number,
+  startDate: string | undefined,
+  fills: DayFill[] = [],
   today: Date = new Date(),
 ): CalendarWeek[] {
   const byDate = new Map<string, { minutes: number; entries: number }>()
@@ -39,6 +36,10 @@ export function contributionsCalendar(
     day.entries += 1
     byDate.set(entry.date, day)
   }
+  const filledByDate = new Map<string, number>()
+  for (const fill of fills) {
+    filledByDate.set(fill.date, (filledByDate.get(fill.date) ?? 0) + fill.filledMinutes)
+  }
 
   let peak = 0
   for (const day of byDate.values()) {
@@ -46,8 +47,11 @@ export function contributionsCalendar(
   }
   const required = dailyRequiredMinutes > 0 ? dailyRequiredMinutes : peak
 
-  const firstOfMonth = new Date(today.getFullYear(), today.getMonth() - 11, 1)
   const todayKey = dateKey(today)
+  const parsedStart = startDate ? new Date(`${startDate}T00:00:00`) : null
+  const start = parsedStart && !Number.isNaN(parsedStart.getTime()) ? parsedStart : today
+  const firstOfMonth = new Date(Math.min(start.getTime(), today.getTime()))
+  firstOfMonth.setDate(1)
   const weeks: CalendarWeek[] = []
   let cursor = startOfWeek(firstOfMonth)
   while (dateKey(cursor) <= todayKey) {
@@ -61,35 +65,19 @@ export function contributionsCalendar(
         continue
       }
       const logged = byDate.get(key) ?? { minutes: 0, entries: 0 }
-      days.push({ date: key, ...logged, level: levelFor(logged.minutes, required) })
+      const filled = filledByDate.get(key) ?? 0
+      const minutes = logged.minutes + filled
+      days.push({
+        date: key,
+        minutes,
+        entries: logged.entries,
+        filled,
+        level: levelFor(minutes, required),
+      })
     }
     weeks.push({ days })
     cursor = new Date(cursor)
     cursor.setDate(cursor.getDate() + 7)
   }
   return weeks
-}
-
-export function streakStats(weeks: CalendarWeek[]): StreakStats {
-  const days = weeks.flatMap((week) => week.days).filter((day) => day !== null)
-  let longest = 0
-  let run = 0
-  for (const day of days) {
-    run = day.minutes > 0 ? run + 1 : 0
-    longest = Math.max(longest, run)
-  }
-
-  const last = days.length - 1
-  const todayLogged = last >= 0 && days[last].minutes > 0
-  const current = todayLogged ? run : streakEndingAt(days, last - 1)
-
-  return { current, longest, activeDays: days.filter((day) => day.minutes > 0).length }
-}
-
-function streakEndingAt(days: CalendarDay[], index: number): number {
-  let count = 0
-  for (let i = index; i >= 0 && days[i].minutes > 0; i--) {
-    count++
-  }
-  return count
 }

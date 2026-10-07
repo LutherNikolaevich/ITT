@@ -31,6 +31,15 @@ const emptyDraft = (): EntryDraft => ({
   attachments: [],
 })
 
+export const createEntryDraft = (defaultDailyHours: number | null): EntryDraft => {
+  const draft = emptyDraft()
+  if (defaultDailyHours != null) {
+    draft.timeIn = '07:00'
+    draft.timeOut = minutesToHHMM(420 + defaultDailyHours * 60)
+  }
+  return draft
+}
+
 function StagedThumb({ file }: { file: File }) {
   const [url, setUrl] = useState<string | null>(null)
 
@@ -77,12 +86,7 @@ export function EntryForm({ open, editing, entries, settings, onClose, onSave }:
       })
       return
     }
-    const draft = emptyDraft()
-    if (settings.defaultDailyHours != null) {
-      draft.timeIn = '09:00'
-      draft.timeOut = minutesToHHMM(540 + settings.defaultDailyHours * 60)
-    }
-    setForm(draft)
+    setForm(createEntryDraft(settings.defaultDailyHours))
   }, [open, editing, settings.defaultDailyHours])
 
   const set = <K extends keyof EntryDraft>(key: K, value: EntryDraft[K]) =>
@@ -197,11 +201,11 @@ export function EntryForm({ open, editing, entries, settings, onClose, onSave }:
         <span className="md-total-preview__value">
           {previewMinutes != null ? `Total: ${formatHours(previewMinutes)}` : 'Total: —'}
         </span>
-        <span className="md-total-preview__hint">Calculated automatically</span>
       </div>
       <TextField
         label="Notes"
         multiline
+        placeholder="e.g. Assisted with filing and encoding"
         value={form.notes}
         onChange={(v) => set('notes', v)}
         hint="Optional"

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { TimeEntry } from '../types'
-import { contributionsCalendar, streakStats } from './contributions'
+import type { DayFill } from './aggregate'
+import { contributionsCalendar } from './contributions'
 
 const entry = (date: string, timeIn: string, timeOut: string, breakMinutes = 0): TimeEntry => ({
   id: `${date}-${timeIn}`,
@@ -12,15 +13,23 @@ const entry = (date: string, timeIn: string, timeOut: string, breakMinutes = 0):
   notes: '',
 })
 
+const TODAY = new Date(2026, 8, 16)
+
 describe('contributionsCalendar', () => {
-  it('starts on the Monday on or before the first day, 11 months back', () => {
-    const weeks = contributionsCalendar([], 480, new Date(2026, 8, 16))
-    expect(weeks[0].days[0]?.date).toBe('2025-09-29')
+  it('starts on the Monday on or before the internship start month', () => {
+    const weeks = contributionsCalendar([], 480, '2026-09-01', [], TODAY)
+    expect(weeks[0].days[0]?.date).toBe('2026-08-31')
     expect(weeks[0].days).toHaveLength(7)
+    expect(weeks).toHaveLength(3)
+  })
+
+  it('clamps a future start date to the current month', () => {
+    const weeks = contributionsCalendar([], 480, '2027-01-01', [], TODAY)
+    expect(weeks[0].days[0]?.date).toBe('2026-08-31')
   })
 
   it('ends on today with null placeholders for future days', () => {
-    const weeks = contributionsCalendar([], 480, new Date(2026, 8, 16))
+    const weeks = contributionsCalendar([], 480, '2026-09-01', [], TODAY)
     const last = weeks[weeks.length - 1]
     expect(last.days.map((day) => day?.date ?? null)).toEqual([
       '2026-09-14',
@@ -31,7 +40,6 @@ describe('contributionsCalendar', () => {
       null,
       null,
     ])
-    expect(weeks).toHaveLength(51)
   })
 
   it('aggregates minutes from multiple entries on the same day', () => {
@@ -39,7 +47,7 @@ describe('contributionsCalendar', () => {
       entry('2026-09-15', '08:00', '12:00'),
       entry('2026-09-15', '13:00', '17:00'),
     ]
-    const weeks = contributionsCalendar(entries, 480, new Date(2026, 8, 16))
+    const weeks = contributionsCalendar(entries, 480, '2026-09-01', [], TODAY)
     const day = weeks.flatMap((week) => week.days).find((day) => day?.date === '2026-09-15')
     expect(day?.minutes).toBe(480)
     expect(day?.entries).toBe(2)
@@ -47,20 +55,20 @@ describe('contributionsCalendar', () => {
   })
 
   it('counts zero entries on days without logs', () => {
-    const weeks = contributionsCalendar([], 480, new Date(2026, 8, 16))
+    const weeks = contributionsCalendar([], 480, '2026-09-01', [], TODAY)
     const day = weeks.flatMap((week) => week.days).find((day) => day?.date === '2026-09-15')
     expect(day?.entries).toBe(0)
   })
 
   it('maps minutes to levels against the daily target', () => {
     const entries = [
-      entry('2026-09-01', '09:00', '10:00'), // 60m -> <25%
-      entry('2026-09-02', '09:00', '11:00'), // 120m -> 25%
-      entry('2026-09-03', '09:00', '13:00'), // 240m -> 50%
-      entry('2026-09-04', '09:00', '15:00'), // 360m -> 75%
-      entry('2026-09-05', '09:00', '17:00'), // 480m -> 100%
+      entry('2026-09-01', '09:00', '10:00'),
+      entry('2026-09-02', '09:00', '11:00'),
+      entry('2026-09-03', '09:00', '13:00'),
+      entry('2026-09-04', '09:00', '15:00'),
+      entry('2026-09-05', '09:00', '17:00'),
     ]
-    const weeks = contributionsCalendar(entries, 480, new Date(2026, 8, 16))
+    const weeks = contributionsCalendar(entries, 480, '2026-09-01', [], TODAY)
     const byDate = new Map(
       weeks.flatMap((week) => week.days).map((day) => [day?.date, day?.level]),
     )
@@ -74,10 +82,10 @@ describe('contributionsCalendar', () => {
 
   it('scales against the busiest day when there is no daily target', () => {
     const entries = [
-      entry('2026-09-01', '09:00', '11:00'), // 120m
-      entry('2026-09-02', '09:00', '15:00'), // 360m
+      entry('2026-09-01', '09:00', '11:00'),
+      entry('2026-09-02', '09:00', '15:00'),
     ]
-    const weeks = contributionsCalendar(entries, 0, new Date(2026, 8, 16))
+    const weeks = contributionsCalendar(entries, 0, '2026-09-01', [], TODAY)
     const byDate = new Map(
       weeks.flatMap((week) => week.days).map((day) => [day?.date, day?.level]),
     )
@@ -86,7 +94,7 @@ describe('contributionsCalendar', () => {
   })
 
   it('gives empty days level 0 even without a target', () => {
-    const weeks = contributionsCalendar([], 0, new Date(2026, 8, 16))
+    const weeks = contributionsCalendar([], 0, '2026-09-01', [], TODAY)
     const levels = weeks
       .flatMap((week) => week.days)
       .filter((day) => day !== null)
@@ -94,47 +102,39 @@ describe('contributionsCalendar', () => {
     expect(new Set(levels)).toEqual(new Set([0]))
   })
 
-  it('computes current, longest streaks and active days', () => {
-    const entries = [
-      entry('2026-09-14', '09:00', '10:00'),
-      entry('2026-09-15', '09:00', '10:00'),
-      entry('2026-09-16', '09:00', '10:00'),
-      entry('2026-09-11', '09:00', '12:00'),
-      entry('2026-09-10', '09:00', '12:00'),
+  it('adds filled minutes to an undertime day and raises its level', () => {
+    const entries = [entry('2026-09-14', '09:00', '11:00')]
+    const fills: DayFill[] = [
+      { date: '2026-09-14', kind: 'undertime', requiredMinutes: 360, filledMinutes: 360 },
     ]
-    const weeks = contributionsCalendar(entries, 480, new Date(2026, 8, 16))
-    expect(streakStats(weeks)).toEqual({ current: 3, longest: 3, activeDays: 5 })
+    const weeks = contributionsCalendar(entries, 480, '2026-09-01', fills, TODAY)
+    const day = weeks.flatMap((week) => week.days).find((day) => day?.date === '2026-09-14')
+    expect(day?.minutes).toBe(480)
+    expect(day?.entries).toBe(1)
+    expect(day?.filled).toBe(360)
+    expect(day?.level).toBe(4)
   })
 
-  it('keeps the current streak alive when today is not logged yet', () => {
-    const entries = [
-      entry('2026-09-14', '09:00', '10:00'),
-      entry('2026-09-15', '09:00', '10:00'),
+  it('shows a filled absence day with no entries', () => {
+    const fills: DayFill[] = [
+      { date: '2026-09-14', kind: 'absence', requiredMinutes: 480, filledMinutes: 480 },
     ]
-    const weeks = contributionsCalendar(entries, 480, new Date(2026, 8, 16))
-    expect(streakStats(weeks).current).toBe(2)
+    const weeks = contributionsCalendar([], 480, '2026-09-01', fills, TODAY)
+    const day = weeks.flatMap((week) => week.days).find((day) => day?.date === '2026-09-14')
+    expect(day?.minutes).toBe(480)
+    expect(day?.entries).toBe(0)
+    expect(day?.filled).toBe(480)
+    expect(day?.level).toBe(4)
   })
 
-  it('breaks the streak once the previous day is also empty', () => {
-    const entries = [entry('2026-09-13', '09:00', '10:00')]
-    const weeks = contributionsCalendar(entries, 480, new Date(2026, 8, 16))
-    expect(streakStats(weeks).current).toBe(0)
-  })
-
-  it('finds the longest streak even when the current one is shorter', () => {
-    const entries = [
-      entry('2025-10-06', '09:00', '10:00'),
-      entry('2025-10-07', '09:00', '10:00'),
-      entry('2025-10-08', '09:00', '10:00'),
-      entry('2025-10-09', '09:00', '10:00'),
-      entry('2026-09-16', '09:00', '10:00'),
+  it('ignores unfilled fill candidates', () => {
+    const fills: DayFill[] = [
+      { date: '2026-09-14', kind: 'absence', requiredMinutes: 480, filledMinutes: 0 },
     ]
-    const weeks = contributionsCalendar(entries, 480, new Date(2026, 8, 16))
-    expect(streakStats(weeks)).toEqual({ current: 1, longest: 4, activeDays: 5 })
-  })
-
-  it('returns zeros for an empty calendar', () => {
-    const weeks = contributionsCalendar([], 480, new Date(2026, 8, 16))
-    expect(streakStats(weeks)).toEqual({ current: 0, longest: 0, activeDays: 0 })
+    const weeks = contributionsCalendar([], 480, '2026-09-01', fills, TODAY)
+    const day = weeks.flatMap((week) => week.days).find((day) => day?.date === '2026-09-14')
+    expect(day?.minutes).toBe(0)
+    expect(day?.filled).toBe(0)
+    expect(day?.level).toBe(0)
   })
 })

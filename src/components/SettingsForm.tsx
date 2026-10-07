@@ -94,7 +94,7 @@ export function SettingsForm({ settings, entries, onSave, onImport, onReset, onN
     <div className="md-page">
       <div className="md-page__header">
         <h2 className="md-headline">Settings</h2>
-        <span className="md-page__sub">Set your OJT requirements</span>
+        <span className="md-page__sub"> </span>
       </div>
 
       <form
@@ -104,8 +104,11 @@ export function SettingsForm({ settings, entries, onSave, onImport, onReset, onN
           submit()
         }}
       >
-        <div>
-          <h3 className="md-section-title">OJT Requirements</h3>
+        <div className="md-settings-form__label">
+          <h3 className="md-section-title">Date & Time</h3>
+          <span className="md-page__sub">Your OJT requirements and daily schedule</span>
+        </div>
+        <div className="md-settings-form__body">
           <RequirementsFields form={form} set={set} errors={errors} />
         </div>
 
@@ -117,11 +120,9 @@ export function SettingsForm({ settings, entries, onSave, onImport, onReset, onN
       </form>
 
       <section className="md-card md-settings-form">
-        <div>
+        <div className="md-settings-form__label">
           <h3 className="md-section-title">Data</h3>
-          <span className="md-page__sub">
-            Import/Export your data
-          </span>
+          <span className="md-page__sub">Import or export a full backup — attachments included</span>
         </div>
         <div className="md-settings-actions">
           <Button
@@ -149,7 +150,7 @@ export function SettingsForm({ settings, entries, onSave, onImport, onReset, onN
       </section>
 
       <section className="md-card md-settings-form">
-        <div>
+        <div className="md-settings-form__label">
           <h3 className="md-section-title">Danger zone</h3>
           <span className="md-page__sub">Erase all entries, settings, and attachments</span>
         </div>

@@ -1,12 +1,10 @@
 import { useMemo, useState } from 'react'
 import type { TimeEntry } from '../types'
-import { dateKey, entryMinutes, startOfWeek, totalRenderedMinutes } from '../lib/aggregate'
+import { dateKey, startOfWeek, totalRenderedMinutes } from '../lib/aggregate'
 import { formatHours } from '../lib/time'
 import { Button } from './Button'
-import { Chip } from './Chip'
-import { Icon } from './Icon'
-import { IconButton } from './IconButton'
 import { AttachmentViewer } from './AttachmentViewer'
+import { EntryCard } from './EntryCard'
 import { SegmentedButton } from './SegmentedButton'
 
 type HistoryFilter = 'all' | 'week' | 'month'
@@ -17,16 +15,6 @@ interface TimesheetHistoryProps {
   onSetUp: () => void
   onEdit: (id: string) => void
   onDelete: (id: string) => void
-}
-
-function formatDate(date: string): string {
-  const d = new Date(`${date}T00:00:00`)
-  return d.toLocaleDateString(undefined, {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
 }
 
 export function TimesheetHistory({
@@ -63,7 +51,7 @@ export function TimesheetHistory({
   return (
     <div className="md-page">
       <div className="md-page__header">
-        <h2 className="md-headline">Your entries</h2>
+        <h2 className="md-headline">Entries</h2>
         <span className="md-page__sub">Review or edit your logged hours</span>
       </div>
 
@@ -85,25 +73,19 @@ export function TimesheetHistory({
 
       {visible.length === 0 ? (
         hasRequirements ? (
-          <div className="md-card md-empty">
-            <div className="md-empty__badge">
-              <Icon name="list_alt" filled />
-            </div>
+          <div className="md-empty">
             <h3 className="md-empty__title">
               {filter === 'all' ? 'No entries yet' : 'No entries in this period'}
             </h3>
             <p className="md-empty__body">
-              Use the Add entry button to start tracking OJT hours.
+              Tap Add entry to log your first day.
             </p>
           </div>
         ) : (
-          <div className="md-card md-empty">
-            <div className="md-empty__badge">
-              <Icon name="hourglass_top" filled />
-            </div>
+          <div className="md-empty">
             <h3 className="md-empty__title">Set up your OJT requirements</h3>
             <p className="md-empty__body">
-              Enter the required hours and your training period to start tracking progress.
+              Enter your required hours and training period to start tracking.
             </p>
             <Button variant="filled" icon="add" onClick={onSetUp}>
               Add requirements
@@ -112,45 +94,15 @@ export function TimesheetHistory({
         )
       ) : (
         <ul className="md-entry-list">
-          {visible.map((entry) => {
-            const attachmentCount = entry.attachments?.length ?? 0
-            return (
-              <li className="md-entry" key={entry.id}>
-                <div className="md-entry__main">
-                  <div className="md-entry__line">
-                    <span className="md-entry__date">{formatDate(entry.date)}</span>
-                    {attachmentCount > 0 && (
-                      <Chip
-                        icon="attach_file"
-                        onClick={() => setViewerId(entry.id)}
-                        title="View attachments"
-                      >
-                        {attachmentCount}
-                      </Chip>
-                    )}
-                  </div>
-                  <div className="md-entry__meta">
-                    {entry.timeIn} – {entry.timeOut}
-                    {entry.breakMinutes > 0 && <> · {entry.breakMinutes} min break</>}
-                  </div>
-                  {(entry.task || entry.notes) && (
-                    <div className="md-entry__notes">
-                      {entry.task}
-                      {entry.task && entry.notes ? ' — ' : ''}
-                      {entry.notes}
-                    </div>
-                  )}
-                </div>
-                <div className="md-entry__side">
-                  <span className="md-entry__total">{formatHours(entryMinutes(entry))}</span>
-                  <div className="md-entry__actions">
-                    <IconButton icon="edit" label="Edit entry" onClick={() => onEdit(entry.id)} />
-                    <IconButton icon="delete" label="Delete entry" onClick={() => onDelete(entry.id)} />
-                  </div>
-                </div>
-              </li>
-            )
-          })}
+          {visible.map((entry) => (
+            <EntryCard
+              key={entry.id}
+              entry={entry}
+              onEdit={() => onEdit(entry.id)}
+              onDelete={() => onDelete(entry.id)}
+              onViewAttachments={() => setViewerId(entry.id)}
+            />
+          ))}
         </ul>
       )}
 

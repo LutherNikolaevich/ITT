@@ -41,6 +41,7 @@ export function NavigationRail({ view, onChange }: NavigationRailProps) {
     <nav className="md-rail" aria-label="Main navigation">
       <div className="md-rail__brand" role="img" aria-label="OJT Tracker">
         <Icon name="timelapse" />
+        OJT Tracker
       </div>
       <div className="md-rail__group">{PRIMARY_ITEMS.map(renderItem)}</div>
       <div className="md-rail__group md-rail__group--secondary">

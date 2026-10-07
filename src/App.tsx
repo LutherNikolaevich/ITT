@@ -10,7 +10,7 @@ import { Dashboard } from './components/Dashboard'
 import { Dialog } from './components/Dialog'
 import { EntryForm } from './components/EntryForm'
 import { Icon } from './components/Icon'
-import { headerTitle, holidaySummary } from './lib/aggregate'
+import { headerTitle, fillSummary } from './lib/aggregate'
 import { NavigationRail } from './components/NavigationRail'
 import { SettingsForm } from './components/SettingsForm'
 import { SetupDialog } from './components/SetupDialog'
@@ -33,6 +33,11 @@ export default function App() {
   const setSettings = setStoredSettings
   const [entries, setEntries] = useLocalStorage<TimeEntry[]>('ojt-entries', [])
   const [filledHolidays, setFilledHolidays] = useLocalStorage<string[]>('ojt-filled-holidays', [])
+  const [filledUndertime, setFilledUndertime] = useLocalStorage<string[]>(
+    'ojt-filled-undertime',
+    [],
+  )
+  const [filledAbsences, setFilledAbsences] = useLocalStorage<string[]>('ojt-filled-absences', [])
   const [view, setView] = useState<View>('dashboard')
   const [entryOpen, setEntryOpen] = useState(false)
   const [setupOpen, setSetupOpen] = useState(false)
@@ -44,12 +49,14 @@ export default function App() {
   const dismissSnackbar = useCallback(() => setSnackbar(null), [])
 
   const withViewTransition = (apply: () => void) => {
-    const doc = document as Document & { startViewTransition?: (update: () => void) => unknown }
+    const doc = document as Document & {
+      startViewTransition?: (update: () => void) => { finished: Promise<void> }
+    }
     if (!doc.startViewTransition || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       apply()
       return
     }
-    doc.startViewTransition(() => flushSync(apply))
+    void doc.startViewTransition(() => flushSync(apply))
   }
 
   const changeView = (next: View) => {
@@ -159,11 +166,12 @@ export default function App() {
     try {
       await clearAllFiles()
     } catch {
-      // Blobs may be orphaned, but app data is still reset below
     }
     setSettings(DEFAULT_SETTINGS)
     setEntries([])
     setFilledHolidays([])
+    setFilledUndertime([])
+    setFilledAbsences([])
     setImportCount((count) => count + 1)
     notify('All data erased')
   }
@@ -183,7 +191,8 @@ export default function App() {
         <AppBar
           title={headerTitle(
             settings.requiredHours,
-            holidaySummary(entries, settings, filledHolidays).completedMinutes,
+            fillSummary(entries, settings, filledHolidays, filledUndertime, filledAbsences)
+              .completedMinutes,
           )}
         />
 
@@ -195,6 +204,18 @@ export default function App() {
               filledHolidays={filledHolidays}
               onToggleHolidayFill={(date) =>
                 setFilledHolidays((prev) =>
+                  prev.includes(date) ? prev.filter((d) => d !== date) : [...prev, date],
+                )
+              }
+              filledUndertime={filledUndertime}
+              onToggleUndertimeFill={(date) =>
+                setFilledUndertime((prev) =>
+                  prev.includes(date) ? prev.filter((d) => d !== date) : [...prev, date],
+                )
+              }
+              filledAbsences={filledAbsences}
+              onToggleAbsenceFill={(date) =>
+                setFilledAbsences((prev) =>
                   prev.includes(date) ? prev.filter((d) => d !== date) : [...prev, date],
                 )
               }

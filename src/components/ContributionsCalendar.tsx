@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import type { CalendarDay, CalendarWeek } from '../lib/contributions'
-import { streakStats } from '../lib/contributions'
 import { dateKey } from '../lib/aggregate'
 import { formatHours } from '../lib/time'
+import type { TimeEntry } from '../types'
+import { EntryCard } from './EntryCard'
 
 interface ContributionsCalendarProps {
   weeks: CalendarWeek[]
-  totalMinutes: number
+  entries: TimeEntry[]
 }
 
 const CELL = 12
@@ -50,34 +51,28 @@ function monthLabels(weeks: CalendarWeek[]): MonthLabel[] {
 
 function detailFor(day: CalendarDay): string {
   if (day.minutes <= 0) return `${formatDayLong(day.date)} · no hours logged`
+  if (day.entries === 0 && day.filled > 0) {
+    return `${formatDayLong(day.date)} · ${formatHours(day.minutes)} filled`
+  }
   const entries = day.entries === 1 ? '1 entry' : `${day.entries} entries`
-  return `${formatDayLong(day.date)} · ${formatHours(day.minutes)} · ${entries}`
+  const filled = day.filled > 0 ? ` · ${formatHours(day.filled)} filled` : ''
+  return `${formatDayLong(day.date)} · ${formatHours(day.minutes)} · ${entries}${filled}`
 }
 
-export function ContributionsCalendar({ weeks, totalMinutes }: ContributionsCalendarProps) {
+export function ContributionsCalendar({ weeks, entries }: ContributionsCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const today = dateKey(new Date())
-  const stats = streakStats(weeks)
   const selected = weeks
     .flatMap((week) => week.days)
     .find((day) => day?.date === selectedDate)
+  const dayEntries = selectedDate
+    ? entries
+        .filter((entry) => entry.date === selectedDate)
+        .sort((a, b) => a.timeIn.localeCompare(b.timeIn))
+    : []
 
   return (
     <div className="md-card md-contrib">
-      <div className="md-contrib__stats">
-        <span className="md-contrib__stat">
-          <span className="md-contrib__stat-value">{stats.current}</span>
-          <span className="md-contrib__stat-label">current streak</span>
-        </span>
-        <span className="md-contrib__stat">
-          <span className="md-contrib__stat-value">{stats.longest}</span>
-          <span className="md-contrib__stat-label">longest streak</span>
-        </span>
-        <span className="md-contrib__stat">
-          <span className="md-contrib__stat-value">{stats.activeDays}</span>
-          <span className="md-contrib__stat-label">active days</span>
-        </span>
-      </div>
       <div className="md-contrib__grid">
         <div className="md-contrib__weekdays" aria-hidden="true">
           <span />
@@ -127,13 +122,18 @@ export function ContributionsCalendar({ weeks, totalMinutes }: ContributionsCale
           </div>
         </div>
       </div>
-      <p className="md-contrib__detail" aria-live="polite">
-        {selected ? detailFor(selected) : 'Tap a day for details'}
-      </p>
+      {selected && dayEntries.length > 0 ? (
+        <ul className="md-entry-list md-contrib__entries">
+          {dayEntries.map((entry) => (
+            <EntryCard key={entry.id} entry={entry} />
+          ))}
+        </ul>
+      ) : (
+        <p className="md-contrib__detail" aria-live="polite">
+          {selected ? detailFor(selected) : 'Tap a day for details'}
+        </p>
+      )}
       <div className="md-contrib__footer">
-        <span className="md-contrib__summary">
-          {formatHours(totalMinutes)} logged in the last 12 months
-        </span>
         <span className="md-contrib__legend" aria-hidden="true">
           Less
           {[0, 1, 2, 3, 4].map((level) => (

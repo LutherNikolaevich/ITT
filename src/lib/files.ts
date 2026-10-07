@@ -78,7 +78,7 @@ export async function loadFile(id: string): Promise<Blob | undefined> {
   return withStore<Blob | undefined>('readonly', (store) => store.get(id))
 }
 
-export async function deleteFile(id: string): Promise<void> {
+async function deleteFile(id: string): Promise<void> {
   await withStore('readwrite', (store) => store.delete(id) as IDBRequest<undefined>)
 }
 
