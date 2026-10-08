@@ -685,7 +685,7 @@ button.md-contrib__day:focus-visible {
   font: 500 14px/20px var(--md-sys-font);
 }
 
-.md-segmented__item:hover {
+.md-segmented__item:hover:not(.md-segmented__item--selected) {
   color: var(--md-sys-color-on-surface);
 }
 
