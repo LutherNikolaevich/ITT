@@ -105,8 +105,8 @@ export function SettingsForm({ settings, entries, onSave, onImport, onReset, onN
         }}
       >
         <div className="md-settings-form__label">
-          <h3 className="md-section-title">Date & Time</h3>
-          <span className="md-page__sub">Your OJT requirements and daily schedule</span>
+          <h3 className="md-section-title">Configure</h3>
+          <span className="md-page__sub">Set your OJT requirements</span>
         </div>
         <div className="md-settings-form__body">
           <RequirementsFields form={form} set={set} errors={errors} />
@@ -122,7 +122,7 @@ export function SettingsForm({ settings, entries, onSave, onImport, onReset, onN
       <section className="md-card md-settings-form">
         <div className="md-settings-form__label">
           <h3 className="md-section-title">Data</h3>
-          <span className="md-page__sub">Import or export a full backup — attachments included</span>
+          <span className="md-page__sub">Import or Export your data</span>
         </div>
         <div className="md-settings-actions">
           <Button
