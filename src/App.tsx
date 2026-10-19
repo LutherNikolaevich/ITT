@@ -56,7 +56,8 @@ export default function App() {
       apply()
       return
     }
-    void doc.startViewTransition(() => flushSync(apply))
+    // finished rejects when the transition is aborted (e.g. hidden tab) — swallow it
+    doc.startViewTransition(() => flushSync(apply)).finished.catch(() => {})
   }
 
   const changeView = (next: View) => {

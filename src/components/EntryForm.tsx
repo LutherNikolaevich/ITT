@@ -138,6 +138,7 @@ export function EntryForm({ open, editing, entries, settings, onClose, onSave }:
       title={editing ? 'Edit entry' : 'Add entry'}
       onClose={onClose}
       className={editing ? undefined : 'md-dialog--add-entry'}
+      instant
       wide
       actions={
         <>

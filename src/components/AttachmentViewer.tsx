@@ -14,13 +14,20 @@ export function AttachmentViewer({ entry, onClose }: AttachmentViewerProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [url, setUrl] = useState<string | null>(null)
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading')
+  // Keep the last entry around so content stays visible during the close animation.
+  const [cached, setCached] = useState(entry)
 
-  const attachments = entry?.attachments ?? []
+  useEffect(() => {
+    if (entry) setCached(entry)
+  }, [entry])
+
+  const shown = entry ?? cached
+  const attachments = shown?.attachments ?? []
   const selected = attachments.find((meta) => meta.id === selectedId) ?? attachments[0] ?? null
 
   useEffect(() => {
-    setSelectedId(entry?.attachments?.[0]?.id ?? null)
-  }, [entry])
+    setSelectedId(shown?.attachments?.[0]?.id ?? null)
+  }, [shown])
 
   useEffect(() => {
     if (!selected) return
@@ -48,10 +55,10 @@ export function AttachmentViewer({ entry, onClose }: AttachmentViewerProps) {
     }
   }, [selected?.id])
 
-  if (!entry) return null
+  if (!shown) return null
 
   return (
-    <Dialog open title="Attachments" onClose={onClose} wide>
+    <Dialog open={entry !== null} title="Attachments" onClose={onClose} wide>
       {attachments.length > 1 && (
         <div className="md-viewer__tabs" role="tablist" aria-label="Attached files">
           {attachments.map((meta) => (
